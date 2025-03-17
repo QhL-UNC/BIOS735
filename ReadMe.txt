@@ -1,4 +1,4 @@
-This is the GitHub repository for BIOS 735 Group 3. 
+This is the GitHub repository for BIOS 735 Group Project by Group 3. 
 Our group members include Julian Sim, Li Jiang, Qikai Jiang, Hongyu Yu, and Qinghua Li.
 
 Data will be found under Data folder. Programs will be found under Program folder. 
