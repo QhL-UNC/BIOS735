@@ -1,0 +1,66 @@
+---
+title: "More Tables and Figures"
+author: "Qinghua Li"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 4
+    toc_float: true
+    # code_folding: 'hide'
+    self_contained: true
+  pdf_document:
+    toc: yes
+    toc_depth: 4
+    latex_engine: xelatex
+---
+
+```{r setup, include=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyverse)     # Data management
+library(ggplot2)       # Plots 
+library(gtsummary)     # Summary statistics
+library(data.table)
+```
+
+
+```{r}
+path <- getwd()
+data_path <- gsub("/\\w+$", "", path)
+data_path <- paste0(data_path, "/Data/")
+output_path <- paste0(data_path, "/Result")
+
+red_wine <- "winequality-red.csv"
+white_wine <- "winequality-white.csv"
+
+red_wine_df <- fread(paste0(data_path, red_wine)) %>% mutate(group = "Red")
+white_wine_df <- fread(paste0(data_path, white_wine)) %>% mutate(group = "White")
+
+wine_df <- bind_rows(red_wine_df, white_wine_df)
+```
+
+
+Wine quality data will be used for the group project. In this R markdown, data exploration will be performed. 
+
+# Data exploration
+## Variables and Names 
+```{r}
+names(wine_df) %>% 
+  as.data.frame() %>% 
+  rename("Variable"  = ".") %>% 
+  kableExtra::kable() %>% 
+  kableExtra::kable_styling()
+```
+
+
+## Summary statistics
+```{r}
+colnames(wine_df) <- gsub(" ", "_", colnames(wine_df))
+vars <- wine_df %>% colnames()
+var_list <- paste0(vars, collapse = "+")
+var_formula <- paste0("~", var_list) %>% as.formula()
+
+table1::table1(var_formula, data = wine_df)
+```
+
+
