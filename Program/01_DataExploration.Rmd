@@ -19,7 +19,7 @@ output:
 knitr::opts_chunk$set(echo = FALSE)
 library(tidyverse)     # Data management
 library(ggplot2)       # Plots 
-library(gtsummary)     # Summary statistics
+library(table1)        # Summary statistics
 library(data.table)
 ```
 
@@ -60,7 +60,37 @@ vars <- wine_df %>% colnames()
 var_list <- paste0(vars, collapse = "+")
 var_formula <- paste0("~", var_list) %>% as.formula()
 
-table1::table1(var_formula, data = wine_df)
+table1(var_formula, data = wine_df)
 ```
+
+
+## Histogram of outcome
+* Wine quality here
+```{r}
+wine_df %>% 
+  ggplot(aes(x = quality)) + 
+  geom_histogram(binwidth = 1, color = "gray", fill = "darkgray") +
+  labs(x = "Wine Quality",
+       y = "Count",
+       title = "Histogram for Wine Quality")
+```
+
+
+## Wine quality - binary
+* We will create a binary outcome for wine quality using cutoff >=6 or >=7
+```{r}
+quality <- wine_df %>% 
+  mutate(
+    quality_6 = ifelse(quality >= 6, ">=6", "<6"),
+    quality_7 = ifelse(quality >= 7, ">=7", "<7"),
+    
+    quality_6 = factor(quality_6, levels = c("<6", ">=6")),
+    quality_7 = factor(quality_7, levels = c("<7", ">=7")),
+  ) %>% 
+  select(quality, quality_6, quality_7) 
+
+table1(~ quality + quality_6 + quality_7, data = quality)
+```
+
 
 

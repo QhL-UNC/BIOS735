@@ -1,0 +1,207 @@
+---
+title: "SVM"
+author: "Qinghua Li"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 4
+    toc_float: true
+    # code_folding: 'hide'
+    self_contained: true
+  pdf_document:
+    toc: yes
+    toc_depth: 4
+    latex_engine: xelatex
+---
+
+
+
+```{r setup, include=FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+library(tidyverse)     # data management
+library(caret)         # SVM model and tuning 
+library(e1071)         # SVM model
+library(ggplot2)       # for graphs 
+library(iml)           # for 
+```
+
+
+```{r}
+# ---- paths & data ----
+path <- getwd()
+path <- gsub("/\\w+$", "", path)
+data_path <- paste0(path, "/Data/")
+output_path <- paste0(path, "/Result/")
+
+wine_train <- read.csv(file = paste0(data_path, "wine_train_scaled.csv")) %>% 
+  mutate(quality_7 = as.factor(quality_7),
+         color = as.factor(color))
+wine_test <- read.csv(file = paste0(data_path, "wine_test_scaled.csv")) %>% 
+  mutate(quality_7 = as.factor(quality_7),
+         color = as.factor(color))
+```
+
+
+```{r}
+svm_linear <- function(outcome, title, filename){
+  train_ctrl <- trainControl(method = "repeatedcv", number = 10, repeats = 3)
+  covars <- wine_train %>% select(c(1:11)) %>% colnames()
+  covar_list <- paste0(covars, collapse = "+")
+  var_formula <- paste0(outcome, "~", covar_list) %>% as.formula()
+  
+  svm1 <- train(var_formula, 
+                data = wine_train, 
+                method = "svmLinear",
+                trControl = train_ctrl, 
+                tuneGrid = expand.grid(C = seq(0.1, 5, length = 20)))
+  
+  best_c <- svm1$bestTune$C
+  
+  svm_final <- svm(var_formula,
+                   data = wine_test,
+                   kernel = "linear",
+                   cost = best_c,
+                   scale = TRUE,
+                   type = "C-classification")
+  
+  # Fitted values
+  fitted_values <- svm_final$fitted
+  
+  # Observed values
+  observed_value <- wine_test %>% 
+    select(!!as.name(outcome)) %>% 
+    pull() %>% 
+    as.factor()
+  
+  # Confusion matrix
+  cm <- confusionMatrix(fitted_values, observed_value)
+  print(cm)
+  
+  # weight 
+  weight <- t(svm_final$coefs) %*% svm_final$SV
+  importance <- abs(weight)
+  
+  feature_names <- colnames(svm_final$SV)
+  importance_df <- data.frame(
+    Feature = feature_names,
+    Importance = as.vector(importance)
+  ) %>%
+    arrange(desc(Importance))
+  
+  plot <- ggplot(importance_df, 
+                 aes(x = reorder(Feature, Importance), 
+                     y = Importance)) +
+    geom_col(fill = "steelblue") +
+    coord_flip() +
+    labs(title = title,
+         x = "Feature",
+         y = "Absolute Weight")
+  
+  ggsave(filename = paste0(output_path, filename),
+         width = 7, 
+         height = 6, 
+         dpi = 400)
+}
+```
+
+
+* Dataset was split into training and test at a ratio 8:2. First, training subset will be used to train the model using cross validation, and the final model will be tested using test subset.
+
+# SVM with linear kernel
+## Wine color as outcome
+```{r}
+svm_linear(outcome = "color", 
+           title = "SVM Linear for Wine color",
+           filename = "SVM_linear_var_importance_color.jpeg")
+```
+
+
+## Binary wine quality as outcome
+```{r}
+svm_linear(outcome = "quality_7", 
+           title = "SVM Linear for Wine quality",
+           filename = "SVM_linear_var_importance_quality.jpeg")
+```
+
+
+
+# SVM with Non-linear kernel
+```{r}
+svm_radial <- function(outcome, title, filename) {
+  # 1. Train model on wine_train
+  train_ctrl <- trainControl(method = "repeatedcv", number = 10, repeats = 3)
+  
+  covars <- wine_train %>% dplyr::select(c(1:11)) %>% colnames()
+  covar_formula <- as.formula(paste(outcome, "~", paste(covars, collapse = "+")))
+  
+  svm_rbf <- caret::train(covar_formula,
+                          data = wine_train,
+                          method = "svmRadial",
+                          tuneLength = 5,
+                          trControl = train_ctrl)
+  
+  # 2. Predict on wine_test
+  wine_test <- wine_test %>% dplyr::select(c(1:11), !!as.name(outcome))
+  pred <- predict(svm_rbf, newdata = wine_test)
+  observed <- wine_test[[outcome]] %>% as.factor()
+  cm <- caret::confusionMatrix(pred, observed)
+  print(cm)
+  
+  # # 3. Feature importance using iml
+  # X_test <- wine_test %>% dplyr::select(c(1:11))
+  # y_test <- wine_test %>% dplyr::select(!!as.name(outcome))
+  # 
+  # predictor <- iml::Predictor$new(
+  #   model = svm_final,
+  #   data = X_test,
+  #   y = y_test,
+  #   type = "prob"
+  # )
+  # 
+  # imp <- FeatureImp$new(predictor, loss = "ce")
+  # importance_df <- imp$results
+  # 
+  # # 4. Plot and save feature importance
+  # plot <- ggplot(importance_df,
+  #                aes(x = reorder(feature, importance),
+  #                    y = importance)) +
+  #   geom_col(fill = "steelblue") +
+  #   coord_flip() +
+  #   labs(title = title,
+  #        x = "Feature",
+  #        y = "Permutation Importance (Cross-Entropy Loss)") +
+  #   theme_minimal()
+  # 
+  # ggsave(paste0(output_path, filename), plot, width = 7, height = 6, dpi = 400)
+  # 
+  #   # 5. Return outputs
+  #   return(list(model = svm_rbf,
+  #               confusion_matrix = cm,
+  #               importance = importance_df,
+  #               plot = plot))
+}
+
+```
+
+
+## Wine color as outcome
+```{r}
+svm_radial(outcome = "color",
+           title = "SVM Radial for Wine Color",
+           filename = "SVM_radial_var_importance_color.jpeg")
+```
+
+
+
+## Binary wine quality as outcome
+```{r}
+svm_radial(outcome = "quality_7",
+           title = "SVM Radial for Wine Quality",
+           filename = "SVM_radial_var_importance_quality.jpeg")
+```
+
+
+
+
+

@@ -17,8 +17,19 @@ library(data.table)
 
 
 # ---- load in data ----
-wine_white <- fread("Data/winequality-white.csv") %>% mutate(color = "white")
-wine_red <- fread("Data/winequality-red.csv") %>% mutate(color = "red")
+path <- getwd()
+data_path <- gsub("/\\w+$", "", path)
+data_path <- paste0(data_path, "/Data/")
+
+wine_white <- fread(paste0(data_path, "winequality-white.csv")) %>% 
+  mutate(color = "white",
+         quality_7 = ifelse(quality < 7, "0", "1"),
+         quality_7 = factor(quality_7, levels = c("0", "1")))
+
+wine_red <- fread(paste0(data_path, "winequality-red.csv")) %>% 
+  mutate(color = "red",
+         quality_7 = ifelse(quality < 7, "0", "1"),
+         quality_7 = factor(quality_7, levels = c("0", "1")))
 
 
 # split size into train and test with 8:2 ratio
@@ -37,10 +48,11 @@ wine_red_test <- wine_red[-red_train_ind, ]
 wine_train <- bind_rows(wine_red_train, wine_white_train)
 wine_test <- bind_rows(wine_red_test, wine_white_test)
 
-write_csv(wine_test, file = "Data/wine_test.csv")
-write_csv(wine_train, file = "Data/wine_train.csv")
+write_csv(wine_test, file = paste0(data_path, "wine_test.csv"))
+write_csv(wine_train, file = paste0(data_path, "wine_train.csv"))
 
 
+# table1::table1(~ quality_7, data = wine_train)
 
 # ---- Correlation ----
 ## training dataset will be used to explore correlation among 11 continuous vars
