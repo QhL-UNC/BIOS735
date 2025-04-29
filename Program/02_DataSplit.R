@@ -18,8 +18,8 @@ library(data.table)
 
 # ---- load in data ----
 path <- getwd()
-data_path <- gsub("/\\w+$", "", path)
-data_path <- paste0(data_path, "/Data/")
+# data_path <- gsub("/\\w+$", "", path)
+data_path <- paste0(path, "/Data/")
 
 wine_white <- fread(paste0(data_path, "winequality-white.csv")) %>% 
   mutate(color = "white",
