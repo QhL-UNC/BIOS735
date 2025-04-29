@@ -154,7 +154,7 @@ binomial_reg <- function(X, Y, n, intercept = TRUE, tol = 1e-10, max.iter = 100)
   if (!converged) {
     warning("Algorithm failed to converge within ", max.iter, " iterations")
   }
-  
+
   beta.t
 }
 #' Wald Test for Binomial Regression Coefficients
