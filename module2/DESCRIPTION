@@ -1,26 +1,39 @@
 Package: module2
 Title: Binomial and Logistic Regression Modeling Tools
-Version: 0.1.0
+Version: 0.1.2
 Authors@R: 
-    person(given = "Your",
-           family = "Name",
-           role = c("aut", "cre"),
-           email = "your@email.com")
+    c(
+        person(given = "Qikai", family = "Jiang", 
+               role = c("aut", "cre"), 
+               email = "chikai@email.unc.edu"),
+        person(given = c("Julian", "Woojin"), family = "Sim", 
+               role = "aut", 
+               email = "jsim@unc.edu"),
+        person(given = "Hongyu", family = "Yu", 
+               role = "aut", 
+               email = "hongyuyu@email.unc.edu"),
+        person(given = "Qinghua", family = "Li", 
+               role = "ctb", 
+               email = "qhl@ad.unc.edu"),
+        person(given = "Li", family = "Jiang", 
+               role = "ctb", 
+               email = "lijian@unc.edu")
+    )
 Description: Provides two distinct regression approaches:
     1. Frequentist binomial regression via Newton-Raphson optimization with Wald tests
     2. Bayesian logistic regression via Metropolis-Hastings MCMC
     Includes comprehensive testing and validation.
 License: MIT + file LICENSE
 Encoding: UTF-8
-LazyData: true
+Depends: 
+    R (>= 3.5.0)
 Imports:
-    stats,
-    methods
+    stats
 Suggests:
     testthat (>= 3.0.0),
     dplyr,
     ggplot2
-Depends: 
-    R (>= 3.5.0)
 RoxygenNote: 7.3.2
-Config/testthat/edition: 3
+Config/Needs/quarto: quarto
+Config/check/use_internal_tz: true
+Config/check/use_internal_checks: true
